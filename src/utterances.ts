@@ -79,14 +79,17 @@ bootstrap();
 
 addEventListener('not-installed', function handleNotInstalled() {
   removeEventListener('not-installed', handleNotInstalled);
-  document.querySelector('.timeline')!.insertAdjacentHTML('afterbegin', `
+  document.querySelector(".timeline")!.insertAdjacentHTML(
+    "afterbegin",
+    `
   <div class="flash flash-error">
     Error: utterances is not installed on <code>${page.owner}/${page.repo}</code>.
     If you own this repo,
-    <a href="https://github.com/apps/utterances" target="_top"><strong>install the app</strong></a>.
+    <a href="https://github.com/apps/lumina-moe-utterances-app" target="_top"><strong>install the app</strong></a>.
     Read more about this change in
     <a href="https://github.com/utterance/utterances/pull/25" target="_top">the PR</a>.
-  </div>`);
+  </div>`
+  );
   scheduleMeasure();
 });
 

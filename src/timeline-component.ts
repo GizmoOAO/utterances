@@ -18,10 +18,6 @@ export class TimelineComponent {
     this.element.innerHTML = `
       <h1 class="timeline-header">
         <a class="text-link" target="_blank"></a>
-        <em>
-          - powered by
-          <a class="text-link" href="https://utteranc.es" target="_blank">utteranc.es</a>
-        </em>
       </h1>`;
     this.countAnchor = this.element.firstElementChild!.firstElementChild as HTMLAnchorElement;
     this.marker = document.createComment('marker');

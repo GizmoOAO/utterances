@@ -16,7 +16,7 @@ export class ConfigurationComponent {
       </p>
       <ol>
         <li>Make sure the repo is public, otherwise your readers will not be able to view the issues/comments.</li>
-        <li>Make sure the <a href="https://github.com/apps/utterances">utterances app</a>
+        <li>Make sure the <a href="https://github.com/apps/lumina-moe-utterances-app">utterances app</a>
           is installed on the repo, otherwise users will not be able to post comments.
         </li>
         <li>If your repo is a fork, navigate to its <em>settings</em> tab and confirm

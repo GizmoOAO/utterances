@@ -1,0 +1,21 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: build
+    image: node:12.18.3
+    commands:
+      - yarn install
+      - yarn run build
+
+  - name: publish
+    image: plugins/gh-pages
+    pull: always
+    settings:
+      username:
+        from_secret: github_username
+      password:
+        from_secret: github_password
+      pages_directory: dist
+      target_branch: gh-pages
