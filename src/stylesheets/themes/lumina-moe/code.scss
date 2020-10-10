@@ -1,0 +1,17 @@
+@import "./variables";
+
+.bg-gray-light,
+.bg-white {
+  background-color: $bg-gray !important;
+}
+
+.markdown-body {
+  .highlight {
+    pre {
+      background-color: $gray-100 !important;
+    }
+  }
+  code {
+    background-color: $gray-100 !important;
+  }
+}
