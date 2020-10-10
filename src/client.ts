@@ -80,10 +80,13 @@ document.head.insertAdjacentHTML(
 const utterancesOrigin = new URL(script.src).origin;
 const url = `${utterancesOrigin}/utterances.html`;
 script.insertAdjacentHTML(
-  'afterend',
-  `<div class="utterances">
-    <iframe class="utterances-frame" title="Comments" scrolling="no" src="${url}?${param(attrs)}"></iframe>
-  </div>`);
+  "afterend",
+  `<div class="utterances" id="utterances">
+    <iframe class="utterances-frame" title="Comments" scrolling="no" src="${url}?${param(
+    attrs
+  )}"></iframe>
+  </div>`
+);
 const container = script.nextElementSibling as HTMLDivElement;
 script.parentElement!.removeChild(script);
 
