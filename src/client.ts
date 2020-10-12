@@ -84,7 +84,7 @@ script.insertAdjacentHTML(
   `<div class="utterances" id="utterances">
     <iframe class="utterances-frame" title="Comments" scrolling="no" src="${url}?${param(
     attrs
-  )}"></iframe>
+  )}" loading="lazy"></iframe>
   </div>`
 );
 const container = script.nextElementSibling as HTMLDivElement;

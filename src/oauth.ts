@@ -1,4 +1,4 @@
-import { UTTERANCES_API } from './utterances-api';
+import { UTTERANCES_API } from "./utterances-api";
 import { param } from './deparam';
 
 export const token = { value: null as null | string };

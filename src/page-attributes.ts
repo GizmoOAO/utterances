@@ -48,6 +48,7 @@ function readPageAttributes() {
 
   let inputPositionTop: Boolean = params["input-position-top"] == "true";
   let reverseOrder: Boolean = params["reverse-order"] == "true";
+  let author: String = params["author"];
 
   return {
     owner: matches[1],
@@ -62,6 +63,7 @@ function readPageAttributes() {
     theme: params.theme || "github-light",
     inputPositionTop: inputPositionTop,
     reverseOrder: reverseOrder,
+    author: author,
   };
 }
 

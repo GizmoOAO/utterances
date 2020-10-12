@@ -1,35 +1,54 @@
-import { token } from './oauth';
-import { decodeBase64UTF8 } from './encoding';
-import { UTTERANCES_API } from './utterances-api';
+import { token } from "./oauth";
+import { decodeBase64UTF8 } from "./encoding";
+import { UTTERANCES_API } from "./utterances-api";
+import { pageAttributes as page } from "./page-attributes";
 
-const GITHUB_API = 'https://api.github.com/';
-const GITHUB_ENCODING__HTML_JSON = 'application/vnd.github.VERSION.html+json';
-const GITHUB_ENCODING__HTML = 'application/vnd.github.VERSION.html';
-const GITHUB_ENCODING__REACTIONS_PREVIEW = 'application/vnd.github.squirrel-girl-preview';
+const GITHUB_API = "https://api.github.com/";
+const GITHUB_ENCODING__HTML_JSON = "application/vnd.github.VERSION.html+json";
+const GITHUB_ENCODING__HTML = "application/vnd.github.VERSION.html";
+const GITHUB_ENCODING__REACTIONS_PREVIEW =
+  "application/vnd.github.squirrel-girl-preview";
 
 export const PAGE_SIZE = 25;
 
-export type ReactionID = '+1' | '-1' | 'laugh' | 'hooray' | 'confused' | 'heart' | 'rocket' | 'eyes';
+export type ReactionID =
+  | "+1"
+  | "-1"
+  | "laugh"
+  | "hooray"
+  | "confused"
+  | "heart"
+  | "rocket"
+  | "eyes";
 
-export const reactionTypes: ReactionID[] = ['+1', '-1', 'laugh', 'hooray', 'confused', 'heart', 'rocket', 'eyes'];
+export const reactionTypes: ReactionID[] = [
+  "+1",
+  "-1",
+  "laugh",
+  "hooray",
+  "confused",
+  "heart",
+  "rocket",
+  "eyes",
+];
 
 let owner: string;
 let repo: string;
-const branch = 'master';
+const branch = "master";
 
-export function setRepoContext(context: { owner: string; repo: string; }) {
+export function setRepoContext(context: { owner: string; repo: string }) {
   owner = context.owner;
   repo = context.repo;
 }
 
 function githubRequest(relativeUrl: string, init?: RequestInit) {
   init = init || {};
-  init.mode = 'cors';
-  init.cache = 'no-cache'; // force conditional request
+  init.mode = "cors";
+  init.cache = "no-cache"; // force conditional request
   const request = new Request(GITHUB_API + relativeUrl, init);
-  request.headers.set('Accept', GITHUB_ENCODING__REACTIONS_PREVIEW);
+  request.headers.set("Accept", GITHUB_ENCODING__REACTIONS_PREVIEW);
   if (!/^search\//.test(relativeUrl) && token.value !== null) {
-    request.headers.set('Authorization', `token ${token.value}`);
+    request.headers.set("Authorization", `token ${token.value}`);
   }
   return request;
 }
@@ -38,19 +57,19 @@ const rateLimit = {
   standard: {
     limit: Number.MAX_VALUE,
     remaining: Number.MAX_VALUE,
-    reset: 0
+    reset: 0,
   },
   search: {
     limit: Number.MAX_VALUE,
     remaining: Number.MAX_VALUE,
-    reset: 0
-  }
+    reset: 0,
+  },
 };
 
 function processRateLimit(response: Response) {
-  const limit = response.headers.get('X-RateLimit-Limit')!;
-  const remaining = response.headers.get('X-RateLimit-Remaining')!;
-  const reset = response.headers.get('X-RateLimit-Reset')!;
+  const limit = response.headers.get("X-RateLimit-Limit")!;
+  const remaining = response.headers.get("X-RateLimit-Remaining")!;
+  const reset = response.headers.get("X-RateLimit-Reset")!;
 
   const isSearch = /\/search\//.test(response.url);
   const rate = isSearch ? rateLimit.search : rateLimit.standard;
@@ -62,15 +81,21 @@ function processRateLimit(response: Response) {
   if (response.status === 403 && rate.remaining === 0) {
     const resetDate = new Date(0);
     resetDate.setUTCSeconds(rate.reset);
-    const mins = Math.round((resetDate.getTime() - new Date().getTime()) / 1000 / 60);
-    const apiType = isSearch ? 'search API' : 'non-search APIs';
+    const mins = Math.round(
+      (resetDate.getTime() - new Date().getTime()) / 1000 / 60
+    );
+    const apiType = isSearch ? "search API" : "non-search APIs";
     // tslint:disable-next-line:no-console
-    console.warn(`Rate limit exceeded for ${apiType}. Resets in ${mins} minute${mins === 1 ? '' : 's'}.`);
+    console.warn(
+      `Rate limit exceeded for ${apiType}. Resets in ${mins} minute${
+        mins === 1 ? "" : "s"
+      }.`
+    );
   }
 }
 
 export function readRelNext(response: Response) {
-  const link = response.headers.get('link');
+  const link = response.headers.get("link");
   if (link === null) {
     return 0;
   }
@@ -82,25 +107,26 @@ export function readRelNext(response: Response) {
 }
 
 function githubFetch(request: Request): Promise<Response> {
-  return fetch(request).then(response => {
+  return fetch(request).then((response) => {
     if (response.status === 401) {
       token.value = null;
     }
     if (response.status === 403) {
-      response.json().then(data => {
-        if (data.message === 'Resource not accessible by integration') {
-          window.dispatchEvent(new CustomEvent('not-installed'));
+      response.json().then((data) => {
+        if (data.message === "Resource not accessible by integration") {
+          window.dispatchEvent(new CustomEvent("not-installed"));
         }
       });
     }
 
     processRateLimit(response);
 
-    if (request.method === 'GET'
-      && [401, 403].indexOf(response.status) !== -1
-      && request.headers.has('Authorization')
+    if (
+      request.method === "GET" &&
+      [401, 403].indexOf(response.status) !== -1 &&
+      request.headers.has("Authorization")
     ) {
-      request.headers.delete('Authorization');
+      request.headers.delete("Authorization");
       return githubFetch(request);
     }
     return response;
@@ -108,61 +134,75 @@ function githubFetch(request: Request): Promise<Response> {
 }
 
 export function loadJsonFile<T>(path: string, html = false) {
-  const request = githubRequest(`repos/${owner}/${repo}/contents/${path}?ref=${branch}`);
+  const request = githubRequest(
+    `repos/${owner}/${repo}/contents/${path}?ref=${branch}`
+  );
   if (html) {
-    request.headers.set('accept', GITHUB_ENCODING__HTML);
+    request.headers.set("accept", GITHUB_ENCODING__HTML);
   }
-  return githubFetch(request).then<FileContentsResponse | string>(response => {
-    if (response.status === 404) {
-      throw new Error(`Repo "${owner}/${repo}" does not have a file named "${path}" in the "${branch}" branch.`);
-    }
-    if (!response.ok) {
-      throw new Error(`Error fetching ${path}.`);
-    }
-    return html ? response.text() : response.json();
-  }).then<T>(file => {
-    if (html) {
-      return file;
-    }
-    const { content } = file as FileContentsResponse;
-    const decoded = decodeBase64UTF8(content);
-    return JSON.parse(decoded);
-  });
+  return githubFetch(request)
+    .then<FileContentsResponse | string>((response) => {
+      if (response.status === 404) {
+        throw new Error(
+          `Repo "${owner}/${repo}" does not have a file named "${path}" in the "${branch}" branch.`
+        );
+      }
+      if (!response.ok) {
+        throw new Error(`Error fetching ${path}.`);
+      }
+      return html ? response.text() : response.json();
+    })
+    .then<T>((file) => {
+      if (html) {
+        return file;
+      }
+      const { content } = file as FileContentsResponse;
+      const decoded = decodeBase64UTF8(content);
+      return JSON.parse(decoded);
+    });
 }
 
 export function loadIssueByTerm(term: string) {
-  const q = `"${term}" type:issue in:title is:open author:GizmoOAO repo:${owner}/${repo}`;
-  const request = githubRequest(`search/issues?q=${encodeURIComponent(q)}&sort=created&order=asc`);
-  return githubFetch(request).then<IssueSearchResponse>(response => {
-    if (!response.ok) {
-      throw new Error('Error fetching issue via search.');
-    }
-    return response.json();
-  }).then(results => {
-    if (results.total_count === 0) {
-      return null;
-    }
-    if (results.total_count > 1) {
-      // tslint:disable-next-line:no-console
-      console.warn(`Multiple issues match "${q}".`);
-    }
-    term = term.toLowerCase();
-    for (const result of results.items) {
-      if (result.title.toLowerCase().indexOf(term) !== -1) {
-        return result;
+  const q = `"${term}" type:issue in:title is:open author:${
+    page.author ? page.author : owner
+  } repo:${owner}/${repo}`;
+  const request = githubRequest(
+    `search/issues?q=${encodeURIComponent(q)}&sort=created&order=asc`
+  );
+  return githubFetch(request)
+    .then<IssueSearchResponse>((response) => {
+      if (!response.ok) {
+        throw new Error("Error fetching issue via search.");
       }
-    }
-    // tslint:disable-next-line:no-console
-    console.warn(`Issue search results do not contain an issue with title matching "${term}". Using first result.`);
-    return results.items[0];
-  });
+      return response.json();
+    })
+    .then((results) => {
+      if (results.total_count === 0) {
+        return null;
+      }
+      if (results.total_count > 1) {
+        // tslint:disable-next-line:no-console
+        console.warn(`Multiple issues match "${q}".`);
+      }
+      term = term.toLowerCase();
+      for (const result of results.items) {
+        if (result.title.toLowerCase().indexOf(term) !== -1) {
+          return result;
+        }
+      }
+      // tslint:disable-next-line:no-console
+      console.warn(
+        `Issue search results do not contain an issue with title matching "${term}". Using first result.`
+      );
+      return results.items[0];
+    });
 }
 
 export function loadIssueByNumber(issueNumber: number) {
   const request = githubRequest(`repos/${owner}/${repo}/issues/${issueNumber}`);
-  return githubFetch(request).then<Issue>(response => {
+  return githubFetch(request).then<Issue>((response) => {
     if (!response.ok) {
-      throw new Error('Error fetching issue via issue number.');
+      throw new Error("Error fetching issue via issue number.");
     }
     return response.json();
   });
@@ -172,15 +212,18 @@ function commentsRequest(issueNumber: number, page: number) {
   const url = `repos/${owner}/${repo}/issues/${issueNumber}/comments?page=${page}&per_page=${PAGE_SIZE}`;
   const request = githubRequest(url);
   const accept = `${GITHUB_ENCODING__HTML_JSON},${GITHUB_ENCODING__REACTIONS_PREVIEW}`;
-  request.headers.set('Accept', accept);
+  request.headers.set("Accept", accept);
   return request;
 }
 
-export function loadCommentsPage(issueNumber: number, page: number): Promise<IssueComment[]> {
+export function loadCommentsPage(
+  issueNumber: number,
+  page: number
+): Promise<IssueComment[]> {
   const request = commentsRequest(issueNumber, page);
-  return githubFetch(request).then(response => {
+  return githubFetch(request).then((response) => {
     if (!response.ok) {
-      throw new Error('Error fetching comments.');
+      throw new Error("Error fetching comments.");
     }
     return response.json();
   });
@@ -190,29 +233,36 @@ export function loadUser(): Promise<User | null> {
   if (token.value === null) {
     return Promise.resolve(null);
   }
-  return githubFetch(githubRequest('user'))
-    .then(response => {
-      if (response.ok) {
-        return response.json();
-      }
-      return null;
-    });
+  return githubFetch(githubRequest("user")).then((response) => {
+    if (response.ok) {
+      return response.json();
+    }
+    return null;
+  });
 }
 
-export function createIssue(issueTerm: string, documentUrl: string, title: string, description: string, label: string) {
-  const url = `${UTTERANCES_API}/repos/${owner}/${repo}/issues${label ? `?label=${encodeURIComponent(label)}` : ''}`;
+export function createIssue(
+  issueTerm: string,
+  documentUrl: string,
+  title: string,
+  description: string,
+  label: string
+) {
+  const url = `${UTTERANCES_API}/repos/${owner}/${repo}/issues${
+    label ? `?label=${encodeURIComponent(label)}` : ""
+  }`;
   const request = new Request(url, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({
       title: issueTerm,
-      body: `# ${title}\n\n${description}\n\n[${documentUrl}](${documentUrl})`
-    })
+      body: `# ${title}\n\n${description}\n\n[${documentUrl}](${documentUrl})`,
+    }),
   });
-  request.headers.set('Accept', GITHUB_ENCODING__REACTIONS_PREVIEW);
-  request.headers.set('Authorization', `token ${token.value}`);
-  return fetch(request).then<Issue>(response => {
+  request.headers.set("Accept", GITHUB_ENCODING__REACTIONS_PREVIEW);
+  request.headers.set("Authorization", `token ${token.value}`);
+  return fetch(request).then<Issue>((response) => {
     if (!response.ok) {
-      throw new Error('Error creating comments container issue');
+      throw new Error("Error creating comments container issue");
     }
     return response.json();
   });
@@ -221,43 +271,53 @@ export function createIssue(issueTerm: string, documentUrl: string, title: strin
 export function postComment(issueNumber: number, markdown: string) {
   const url = `repos/${owner}/${repo}/issues/${issueNumber}/comments`;
   const body = JSON.stringify({ body: markdown });
-  const request = githubRequest(url, { method: 'POST', body });
+  const request = githubRequest(url, { method: "POST", body });
   const accept = `${GITHUB_ENCODING__HTML_JSON},${GITHUB_ENCODING__REACTIONS_PREVIEW}`;
-  request.headers.set('Accept', accept);
-  return githubFetch(request).then<IssueComment>(response => {
+  request.headers.set("Accept", accept);
+  return githubFetch(request).then<IssueComment>((response) => {
     if (!response.ok) {
-      throw new Error('Error posting comment.');
+      throw new Error("Error posting comment.");
     }
     return response.json();
   });
 }
 
 export async function toggleReaction(url: string, content: ReactionID) {
-  url = url.replace(GITHUB_API, '');
+  url = url.replace(GITHUB_API, "");
   // We don't know if the reaction exists or not. Attempt to create it. If the GitHub
   // API responds that the reaction already exists, delete it.
   const body = JSON.stringify({ content });
-  const postRequest = githubRequest(url, { method: 'POST', body });
-  postRequest.headers.set('Accept', GITHUB_ENCODING__REACTIONS_PREVIEW);
+  const postRequest = githubRequest(url, { method: "POST", body });
+  postRequest.headers.set("Accept", GITHUB_ENCODING__REACTIONS_PREVIEW);
   const response = await githubFetch(postRequest);
   const reaction: Reaction = response.ok ? await response.json() : null;
-  if (response.status === 201) { // reaction created.
+  if (response.status === 201) {
+    // reaction created.
     return { reaction, deleted: false };
   }
   if (response.status !== 200) {
-    throw new Error('expected "201 reaction created" or "200 reaction already exists"');
+    throw new Error(
+      'expected "201 reaction created" or "200 reaction already exists"'
+    );
   }
   // reaction already exists... delete.
-  const deleteRequest = githubRequest(`reactions/${reaction.id}`, { method: 'DELETE' });
-  deleteRequest.headers.set('Accept', GITHUB_ENCODING__REACTIONS_PREVIEW);
+  const deleteRequest = githubRequest(`reactions/${reaction.id}`, {
+    method: "DELETE",
+  });
+  deleteRequest.headers.set("Accept", GITHUB_ENCODING__REACTIONS_PREVIEW);
   await githubFetch(deleteRequest);
   return { reaction, deleted: true };
 }
 
 export function renderMarkdown(text: string) {
-  const body = JSON.stringify({ text, mode: 'gfm', context: `${owner}/${repo}` });
-  return githubFetch(githubRequest('markdown', { method: 'POST', body }))
-    .then(response => response.text());
+  const body = JSON.stringify({
+    text,
+    mode: "gfm",
+    context: `${owner}/${repo}`,
+  });
+  return githubFetch(
+    githubRequest("markdown", { method: "POST", body })
+  ).then((response) => response.text());
 }
 
 interface IssueSearchResponse {
@@ -286,19 +346,19 @@ export interface User {
 }
 
 export type CommentAuthorAssociation =
-  'COLLABORATOR'
-  | 'CONTRIBUTOR'
-  | 'FIRST_TIMER'
-  | 'FIRST_TIME_CONTRIBUTOR'
-  | 'MEMBER'
-  | 'NONE'
-  | 'OWNER';
+  | "COLLABORATOR"
+  | "CONTRIBUTOR"
+  | "FIRST_TIMER"
+  | "FIRST_TIME_CONTRIBUTOR"
+  | "MEMBER"
+  | "NONE"
+  | "OWNER";
 
 export interface Reactions {
   url: string;
   total_count: number;
-  '+1': number;
-  '-1': number;
+  "+1": number;
+  "-1": number;
   laugh: number;
   hooray: number;
   confused: number;
