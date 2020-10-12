@@ -22,8 +22,8 @@ To comment, users must authorize the utterances app to post on their behalf usin
 * Haxe [documentation](https://haxe.org/manual) and [cookbook](https://code.haxe.org/)
 * [danyow.net](https://danyow.net)
 * [os.phil-opp.com](https://os.phil-opp.com/second-edition)
-* **[and many more...](https://github.com/utterance/utterances/blob/master/SITES.md#sites-using-utterances)**
+* **[and many more...](https://github.com/GizmoOAO/utterances/blob/master/SITES.md#sites-using-utterances)**
 
-Are you using utterances? [Add your site](https://github.com/utterance/utterances/edit/master/SITES.md) to the list!
+Are you using utterances? [Add your site](https://github.com/GizmoOAO/utterances/edit/master/SITES.md) to the list!
 
 # try it out 👇👇👇
